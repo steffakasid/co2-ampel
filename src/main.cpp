@@ -4,7 +4,7 @@
 #endif
 
 #define NO_OF_PIX 12
-#define PIN D2
+#define PIN D4
 
 // Parameter 1 = number of pixels in strip
 // Parameter 2 = Arduino pin number (most are valid)
