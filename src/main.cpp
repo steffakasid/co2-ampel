@@ -10,10 +10,10 @@
 #define NEO_PIXEL_PIN D4
 #define NEO_BRIGHTNESS 5
 
-#define LOWER_BOUND 500
+#define LOWER_BOUND 400
 #define GREEN_BOUND 1000
 #define ORANGE_BOUND 1500
-#define RED_BOUND 2000
+#define RED_BOUND 2200
 
 #define MEASURE_DELAY 500
 
@@ -175,29 +175,32 @@ void loop()
     int CO2;                //Variable darf nur Zahlen enthalten
     CO2 = myMHZ19.getCO2(); //Variable schreiben
 
-    int steps = 500 / NEO_PIXEL_RING_SIZE;
+    int stepsGreen = (GREEN_BOUND - LOWER_BOUND) / NEO_PIXEL_RING_SIZE;
+    int stepsOrange = (ORANGE_BOUND - GREEN_BOUND) / NEO_PIXEL_RING_SIZE;
+    int stepsRed = (RED_BOUND - ORANGE_BOUND) / NEO_PIXEL_RING_SIZE;
+
     if (CO2 < LOWER_BOUND)
     {
       theaterChase(strip.Color(0, 255, 0), 10);
     }
     else if (CO2 < GREEN_BOUND)
     {
-      int numPixels = (CO2 - LOWER_BOUND) / steps;
-      Serial.print("numPixels");
+      int numPixels = (CO2 - LOWER_BOUND) / stepsGreen;
+      Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
       setColor(strip.Color(0, 255, 0), numPixels, 50);
     }
     else if (CO2 < ORANGE_BOUND)
     {
-      int numPixels = (CO2 - GREEN_BOUND) / steps;
-      Serial.print("numPixels");
+      int numPixels = (CO2 - GREEN_BOUND) / stepsOrange;
+      Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
       setColor(strip.Color(242, 173, 8), numPixels, 50);
     }
     else if (CO2 < RED_BOUND)
     {
-      int numPixels = (CO2 - ORANGE_BOUND) / steps;
-      Serial.print("numPixels");
+      int numPixels = (CO2 - ORANGE_BOUND) / stepsRed;
+      Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
       setColor(strip.Color(255, 0, 0), numPixels, 50);
     }
