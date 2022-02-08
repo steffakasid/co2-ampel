@@ -178,14 +178,14 @@ void loop()
     int steps = 500 / NEO_PIXEL_RING_SIZE;
     if (CO2 < LOWER_BOUND)
     {
-      strip.show();
+      theaterChase(strip.Color(0, 255, 0), 10);
     }
     else if (CO2 < GREEN_BOUND)
     {
       int numPixels = (CO2 - LOWER_BOUND) / steps;
       Serial.print("numPixels");
       Serial.println(numPixels);
-      setColor(strip.Color(255, 0, 0), numPixels, 50);
+      setColor(strip.Color(0, 255, 0), numPixels, 50);
     }
     else if (CO2 < ORANGE_BOUND)
     {
@@ -203,7 +203,7 @@ void loop()
     }
     else
     {
-      theaterChase(strip.Color(127, 0, 0), 10);
+      theaterChase(strip.Color(255, 0, 0), 10);
     }
 
     delay(MEASURE_DELAY);
