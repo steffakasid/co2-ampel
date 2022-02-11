@@ -1,7 +1,7 @@
 #include <Arduino.h>
-#include "MHZ19.h"
+#include <MHZ19.h>
 #include <SoftwareSerial.h>
-#include <Adafruit_NeoPixel.h>
+#include <NeoPixel.h>
 
 #define RX_PIN 5 //MH-Z19 RX-PIN
 #define TX_PIN 4 //MH-Z19 TX-PIN
@@ -17,163 +17,53 @@
 
 #define MEASURE_DELAY 500
 
-#define BAUDRATE 9600 //Terminal Baudrate
+#define BAUDRATE 9600
 
-//Klassen Initialisierung
 MHZ19 myMHZ19;
 SoftwareSerial mySerial(RX_PIN, TX_PIN);
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NEO_PIXEL_RING_SIZE, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800);
+NeoPixel neoPixel = NeoPixel(NEO_PIXEL_RING_SIZE, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 unsigned long getDataTimer = 0;
 
-uint32_t Wheel(byte WheelPos)
+void calbiration()
 {
-  WheelPos = 255 - WheelPos;
-  if (WheelPos < 85)
+  myMHZ19.autoCalibration(false);
+  Serial.print("ABC Status: ");
+  myMHZ19.getABC() ? Serial.println("ON") : Serial.println("OFF");
+
+  /* if you don't need to wait (it's already been this amount of time), remove the next 2 lines */
+  unsigned long timeElapse = 12e5; //  20 minutes in milliseconds
+  while (millis() < timeElapse)
   {
-    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if (WheelPos < 170)
-  {
-    WheelPos -= 85;
-    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
+  Serial.printf("Waiting %ld of 20 minutes to stabilise...\n", (millis() / 1000 / 60));
 
-void unset()
-{
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
-  {
-    strip.setPixelColor(i, 0); //turn every third pixel off
-  }
-}
+  Serial.printf("CO2: %d\n", myMHZ19.getCO2());
 
-void setColor(uint32_t c, uint8_t pixels, uint8_t wait)
-{
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
-  {
-    if (i < pixels) {
-      strip.setPixelColor(i, c);
-      strip.show();
-      delay(wait);
-    } else {
-      strip.setPixelColor(i, 0);
-    }
-    
-  }
-}
+  neoPixel.theaterChaseRainbow(75);
+  neoPixel.unset();
+  neoPixel.show();
+  };
 
-// Fill the dots one after the other with a color
-void colorWipe(uint32_t c, uint8_t wait)
-{
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
-  {
-    strip.setPixelColor(i, c);
-    strip.show();
-    delay(wait);
-  }
-}
-
-void rainbow(uint8_t wait)
-{
-  uint16_t i, j;
-
-  for (j = 0; j < 256; j++)
-  {
-    for (i = 0; i < strip.numPixels(); i++)
-    {
-      strip.setPixelColor(i, Wheel((i + j) & 255));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-// Slightly different, this makes the rainbow equally distributed throughout
-void rainbowCycle(uint8_t wait)
-{
-  uint16_t i, j;
-
-  for (j = 0; j < 256 * 5; j++)
-  { // 5 cycles of all colors on wheel
-    for (i = 0; i < strip.numPixels(); i++)
-    {
-      strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-    }
-    strip.show();
-    delay(wait);
-  }
-}
-
-//Theatre-style crawling lights.
-void theaterChase(uint32_t c, uint8_t wait)
-{
-  for (int j = 0; j < 10; j++)
-  { //do 10 cycles of chasing
-    for (int q = 0; q < 3; q++)
-    {
-      for (uint16_t i = 0; i < strip.numPixels(); i = i + 3)
-      {
-        strip.setPixelColor(i + q, c); //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i = 0; i < strip.numPixels(); i = i + 3)
-      {
-        strip.setPixelColor(i + q, 0); //turn every third pixel off
-      }
-    }
-  }
-}
-
-//Theatre-style crawling lights with rainbow effect
-void theaterChaseRainbow(uint8_t wait)
-{
-  for (int j = 0; j < 256; j++)
-  { // cycle all 256 colors in the wheel
-    for (int q = 0; q < 3; q++)
-    {
-      for (uint16_t i = 0; i < strip.numPixels(); i = i + 3)
-      {
-        strip.setPixelColor(i + q, Wheel((i + j) % 255)); //turn every third pixel on
-      }
-      strip.show();
-
-      delay(wait);
-
-      for (uint16_t i = 0; i < strip.numPixels(); i = i + 3)
-      {
-        strip.setPixelColor(i + q, 0); //turn every third pixel off
-      }
-    }
-  }
+  Serial.println("Calibrating..");
+  myMHZ19.calibrate();
 }
 
 void setup()
 {
+  neoPixel.begin();
+  neoPixel.setBrightness(NEO_BRIGHTNESS);
 
-  // Initialize NeoPixelRing
-  strip.begin();
-  strip.setBrightness(NEO_BRIGHTNESS);
-  rainbow(1);
-  unset();
-  strip.show();
-
-  //Serielle Intialisierung
   Serial.begin(BAUDRATE);
   mySerial.begin(BAUDRATE);
   myMHZ19.begin(mySerial);
+
+  calbiration();
 }
+
 void loop()
 {
-  //Prüfung ob 2 Sekunden um sind.
   if (millis() - getDataTimer >= 2000)
-  {
-    int CO2;                //Variable darf nur Zahlen enthalten
-    CO2 = myMHZ19.getCO2(); //Variable schreiben
+  {              
+    int CO2 = myMHZ19.getCO2();
 
     int stepsGreen = (GREEN_BOUND - LOWER_BOUND) / NEO_PIXEL_RING_SIZE;
     int stepsOrange = (ORANGE_BOUND - GREEN_BOUND) / NEO_PIXEL_RING_SIZE;
@@ -181,38 +71,37 @@ void loop()
 
     if (CO2 < LOWER_BOUND)
     {
-      theaterChase(strip.Color(0, 255, 0), 10);
+      neoPixel.theaterChase(neoPixel.Color(0, 255, 0), 10);
     }
     else if (CO2 < GREEN_BOUND)
     {
       int numPixels = (CO2 - LOWER_BOUND) / stepsGreen;
       Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
-      setColor(strip.Color(0, 255, 0), numPixels, 50);
+      neoPixel.setColor(neoPixel.Color(0, 255, 0), numPixels, 50);
     }
     else if (CO2 < ORANGE_BOUND)
     {
       int numPixels = (CO2 - GREEN_BOUND) / stepsOrange;
       Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
-      setColor(strip.Color(242, 173, 8), numPixels, 50);
+      neoPixel.setColor(neoPixel.Color(255, 255, 0), numPixels, 50);
     }
     else if (CO2 < RED_BOUND)
     {
       int numPixels = (CO2 - ORANGE_BOUND) / stepsRed;
       Serial.print("Number of NEO Pixels ");
       Serial.println(numPixels);
-      setColor(strip.Color(255, 0, 0), numPixels, 50);
+      neoPixel.setColor(neoPixel.Color(255, 0, 0), numPixels, 50);
     }
     else
     {
-      theaterChase(strip.Color(255, 0, 0), 10);
+      neoPixel.theaterChase(neoPixel.Color(255, 0, 0), 10);
     }
 
     delay(MEASURE_DELAY);
-    //Ausgabe auf den Seriellen Monitor
-    Serial.print("CO2 (ppm): ");
-    Serial.println(CO2);
+
+    Serial.printf("CO2 (ppm): %d\n", CO2);
     getDataTimer = millis();
   }
 }
