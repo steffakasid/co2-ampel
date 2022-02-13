@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <MHZ19.h>
 #include <SoftwareSerial.h>
-#include <NeoPixel.h>
+#include "NeoPixel.h"
 
 #define RX_PIN 5 //MH-Z19 RX-PIN
 #define TX_PIN 4 //MH-Z19 TX-PIN
@@ -24,29 +24,6 @@ SoftwareSerial mySerial(RX_PIN, TX_PIN);
 NeoPixel neoPixel = NeoPixel(NEO_PIXEL_RING_SIZE, NEO_PIXEL_PIN, NEO_GRB + NEO_KHZ800);
 unsigned long getDataTimer = 0;
 
-void calbiration()
-{
-  myMHZ19.autoCalibration(false);
-  Serial.print("ABC Status: ");
-  myMHZ19.getABC() ? Serial.println("ON") : Serial.println("OFF");
-
-  /* if you don't need to wait (it's already been this amount of time), remove the next 2 lines */
-  unsigned long timeElapse = 12e5; //  20 minutes in milliseconds
-  while (millis() < timeElapse)
-  {
-  Serial.printf("Waiting %ld of 20 minutes to stabilise...\n", (millis() / 1000 / 60));
-
-  Serial.printf("CO2: %d\n", myMHZ19.getCO2());
-
-  neoPixel.theaterChaseRainbow(75);
-  neoPixel.unset();
-  neoPixel.show();
-  };
-
-  Serial.println("Calibrating..");
-  myMHZ19.calibrate();
-}
-
 void setup()
 {
   neoPixel.begin();
@@ -55,8 +32,7 @@ void setup()
   Serial.begin(BAUDRATE);
   mySerial.begin(BAUDRATE);
   myMHZ19.begin(mySerial);
-
-  calbiration();
+  myMHZ19.autoCalibration(false);
 }
 
 void loop()
