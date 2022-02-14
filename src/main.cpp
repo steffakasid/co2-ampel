@@ -7,7 +7,7 @@
 #define TX_PIN 4 //MH-Z19 TX-PIN
 
 #define NEO_PIXEL_RING_SIZE 12
-#define NEO_PIXEL_PIN D4
+#define NEO_PIXEL_PIN D3
 #define NEO_BRIGHTNESS 5
 
 #define LOWER_BOUND 400
