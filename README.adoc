@@ -1,0 +1,9 @@
+= CO2-Ampel
+
+This project is my implementation of a CO2 alert light. It's based on https://www.blog.berrybase.de/blog/2021/02/16/diy-co2-ampel-mit-dem-mh-z19c/. Some further information can also be found here: https://de.wikipedia.org/wiki/CO2-Ampel.
+
+== Some Details
+
+In the first 20 minutes the CO2 censor will be software calibrated during that time the NeoPixel ring will show rainbow color blinking. During that time the CO2-Ampel should be placed outside to get the lowest possible CO2 level. After the calibration you should not powerdown the CO2-Ampel otherwise it would need recalibration.
+
+The lower bound of indoor CO2 is set to 400ppm. Usually you will not get this indoor especially with humans in a room. At about 1000ppm the NeoPixel ring will change it's color to yellow and at about 1500ppm to red. Above 2200ppm the NeoPixel ring starts blinking red.
